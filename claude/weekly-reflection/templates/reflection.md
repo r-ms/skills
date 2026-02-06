@@ -1,83 +1,83 @@
-# Reflection {{sprint}} — {{user}}
+# Рефлексия {{sprint}} — {{user}}
 
-**Period:** {{week_start}} — {{week_end}}
-**Sprint:** {{sprint}}
-**Created:** {{created_at}}
+**Период:** {{week_start}} — {{week_end}}
+**Спринт:** {{sprint}}
+**Дата создания:** {{created_at}}
 
 ---
 
-## Git Activity
+## Git активность
 
 {{git_summary}}
 
 ---
 
-## My Sprint Tasks
+## Мои задачи спринта
 
-| ID | Task | SP | Status |
-|----|------|:--:|--------|
+| ID | Задача | SP | Статус |
+|----|--------|:--:|--------|
 {{tasks_table}}
 
 ---
 
-## Tasks Created for Others
+## Задачи, созданные для других
 
-| ID | Task | Assignee | SP | Status |
-|----|------|----------|:--:|--------|
+| ID | Задача | Assignee | SP | Статус |
+|----|--------|----------|:--:|--------|
 {{delegated_tasks_table}}
 
 ---
 
-## Results
+## Результаты
 
 {{results}}
 
 ---
 
-## Problems
+## Проблемы
 
 {{problems}}
 
 ---
 
-## Connection to Monthly Goals
+## Связь с месячными целями
 
-| Epic / Objective | Contribution |
-|------------------|-------------|
+| Epic / Цель | Вклад |
+|-------------|-------|
 {{objectives}}
 
 ---
 
 ## AI Learnings
 
-### Workflow Improvements
+### Лучшие практики (Workflow Improvements)
 
 {{workflow_improvements}}
 
-### Automation Opportunities
+### Возможности для автоматизации (Automation Opportunities)
 
 {{automation_opportunities}}
 
-### CLAUDE.md Additions
+### Предложения для CLAUDE.md
 
 {{claude_md_additions}}
 
-### Knowledge to Capture
+### Знания для сохранения (Knowledge to Capture)
 
 {{knowledge_to_capture}}
 
 ---
 
-## Improvement Suggestions
+## Предложения по улучшению
 
 {{improvements}}
 
 ---
 
-## What Felt Good
+## Что было приятно
 
 {{positive}}
 
 ---
 
-*Generated with /weekly-reflection*
+*Сгенерировано с помощью /weekly-reflection*

@@ -1,74 +1,78 @@
 # /weekly-reflection — Claude Code Skill
 
-AI-assisted weekly self-reflection for engineering teams. Automates data collection, keeps the human reflection.
+Еженедельная саморефлексия для AI-first команд. Автоматизирует сбор данных, оставляет человеку только рефлексию.
 
-## How It Works
+## Как работает
 
 ```
 /weekly-reflection
 ```
 
-The skill runs through 5 phases:
+Скилл проходит 5 фаз:
 
-**Phase 0-1: Automated data collection** — three parallel agents gather your sprint tasks, git commits across all repos, and analyze your Claude Code sessions for patterns.
+**Фаза 0-1: Автоматический сбор данных** — три параллельных агента собирают задачи спринта, git-коммиты из всех репозиториев и анализируют Claude Code сессии.
 
-**Phase 2: Context display** — you see everything you did this week in one place, including tasks you delegated to others.
+**Фаза 2: Показ контекста** — всё, что ты сделал за неделю, в одном месте. Включая задачи, которые ты делегировал другим.
 
-**Phase 3: Structured interview** — AI asks 6 questions one by one: achievements, blockers, task closure, alignment with goals, improvement ideas, highlights.
+**Фаза 3: Структурированное интервью** — AI задаёт 6 вопросов по одному: достижения, блокеры, закрытие задач, связь с целями, идеи по улучшению, что порадовало.
 
-**Phase 4: Report** — generates a structured markdown reflection stored in your knowledge base.
+**Фаза 4: Отчёт** — генерирует структурированный markdown-отчёт в knowledge base команды.
 
-**Phase 5: Tracker update** — generates commands to close tasks (manual execution only).
+**Фаза 5: Актуализация трекера** — формирует команды для закрытия задач (только ручное выполнение).
 
-## The AI Learnings Framework
+## Фреймворк AI Learnings
 
-The most valuable part. The skill analyzes your Claude Code sessions and categorizes insights:
+Самая ценная часть. Скилл анализирует Claude Code сессии и категоризирует инсайты:
 
-| Category | What it captures | Example |
-|----------|-----------------|---------|
-| **Workflow Improvements** | What made you more effective | `plan_before_code`, `parallel_exploration`, `test_first` |
-| **Automation Opportunities** | What should become automated | Repeating process → skill, check → hook, integration → MCP server |
-| **CLAUDE.md Additions** | What to add to project instructions | Architecture rules, gotchas, code conventions |
-| **Knowledge to Capture** | What's worth preserving | Codebase facts, solution patterns, team conventions |
+| Категория | Что фиксирует | Примеры |
+|-----------|--------------|---------|
+| **Workflow Improvements** | Что сделало работу эффективнее | `plan_before_code`, `parallel_exploration`, `test_first` |
+| **Automation Opportunities** | Что стоит автоматизировать | Повторяющийся процесс → skill, проверка → hook, интеграция → MCP-сервер |
+| **CLAUDE.md Additions** | Что добавить в инструкции проекта | Архитектурные правила, gotchas, code conventions |
+| **Knowledge to Capture** | Что стоит сохранить | Факты о кодовой базе, паттерны решений, командные соглашения |
 
-This turns weekly reflection into a continuous improvement mechanism for your AI workflow.
+Рефлексия становится механизмом непрерывного улучшения AI-воркфлоу.
 
-## Setup
+## Установка
 
-1. Copy the `weekly-reflection` folder to `.claude/skills/` in your project
-2. Edit `SKILL.md` — set your tracker type, API URL, token path, and repos root
-3. Run `/weekly-reflection` in Claude Code
+1. Скопируй папку `weekly-reflection` в `.claude/skills/` своего проекта
+2. Отредактируй `SKILL.md` — укажи тип трекера, API URL, путь к токену, директорию с репозиториями
+3. Запусти `/weekly-reflection` в Claude Code
 
-### Supported Trackers
+### Поддерживаемые трекеры
 
-The skill includes API examples for:
+Скилл содержит примеры API-вызовов для:
 - Jira
 - Linear
 - YouTrack
 - GitHub Projects
 
-Adapt the API calls in Phase 0 and Agent 1 to your tracker.
+Адаптируй вызовы в Фазе 0 и Агенте 1 под свой трекер.
 
-### Directory Structure
+### Структура файлов
 
 ```
 .claude/skills/weekly-reflection/
-  SKILL.md              # The skill definition
+  SKILL.md              # Определение скилла
   templates/
-    reflection.md       # Report template
+    reflection.md       # Шаблон отчёта
 ```
 
-Reports are saved to:
+Отчёты сохраняются в:
 ```
 knowledge-base/team/{user}/{sprint}/reflection.md
 ```
 
-## Why This Exists
+## Зачем это нужно
 
-Weekly retrospectives take time and often become a formality. The main problem — gathering context. Data is scattered across tracker, Git, and chats. By Friday you don't remember what you did on Tuesday.
+Еженедельные ретро отнимают время и превращаются в формальность. Главная проблема — собрать контекст. Данные разбросаны по трекеру, Git, чатам. К концу недели ты уже не помнишь, что делал во вторник.
 
-This skill automates the data collection and leaves only the reflection to the human. 15 minutes instead of an hour-long meeting.
+Этот скилл автоматизирует сбор данных и оставляет человеку только рефлексию. 15 минут вместо часовой встречи.
 
-## License
+## Автор
+
+[@vibe_analytics](https://t.me/vibe_analytics)
+
+## Лицензия
 
 MIT

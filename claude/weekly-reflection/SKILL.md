@@ -1,53 +1,54 @@
 ---
 name: weekly-reflection
-description: Weekly self-reflection. Collects data from task tracker, Git, analyzes AI sessions, and conducts a structured interview.
+description: Еженедельная саморефлексия. Собирает данные из трекера задач, Git, анализирует AI-сессии и проводит интервью.
 triggers:
   - /weekly-reflection
-  - /reflection
+  - /рефлексия
+  - итоги недели
   - weekly reflection
 ---
 
 # Weekly Reflection Skill
 
-Weekly self-reflection for AI-first teams. Collects context from your task tracker, Git, and Claude Code sessions, conducts a structured interview, and generates a report.
+Еженедельная саморефлексия для AI-first команд. Собирает контекст из трекера задач, Git и Claude Code сессий, проводит структурированное интервью и генерирует отчёт.
 
-## Configuration
+## Конфигурация
 
-Before using, set these variables in the skill or in your CLAUDE.md:
+Перед использованием задай переменные в скилле или в CLAUDE.md:
 
 ```
-# Task tracker (Jira, Linear, YouTrack, GitHub Issues, etc.)
+# Трекер задач (Jira, Linear, YouTrack, GitHub Issues и т.д.)
 TRACKER_TYPE=jira                          # jira | linear | youtrack | github
 TRACKER_API_URL=https://your-org.atlassian.net
-TRACKER_TOKEN_PATH=~/.config/tracker/token # path to API token file
-TRACKER_PROJECT=PROJ                       # project key
-TRACKER_SPRINT_FIELD=sprint                # custom field name for sprint
+TRACKER_TOKEN_PATH=~/.config/tracker/token # путь к API-токену
+TRACKER_PROJECT=PROJ                       # ключ проекта
+TRACKER_SPRINT_FIELD=sprint                # название поля спринта
 
-# Git repositories to scan
-REPOS_ROOT=~/projects                      # parent directory containing your repos
-REPOS_SCAN_DEPTH=3                         # how deep to search for .git directories
+# Git-репозитории для сканирования
+REPOS_ROOT=~/projects                      # директория с репозиториями
+REPOS_SCAN_DEPTH=3                         # глубина поиска .git
 
-# Output
-REFLECTIONS_PATH=knowledge-base/team       # where to store reflection reports
+# Выходные данные
+REFLECTIONS_PATH=knowledge-base/team       # куда сохранять отчёты
 ```
 
 ## Workflow
 
-### Phase 0: Determine Context
+### Фаза 0: Определение контекста
 
-Determine reflection parameters:
+Определи параметры рефлексии:
 
 ```bash
-# User
+# Пользователь
 USER_NAME=$(git config user.name)
 USER_SLUG=$(echo "$USER_NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
-# Period: Monday of current week → today
+# Период: понедельник текущей недели → сегодня
 WEEK_START=$(date -v-monday +%Y-%m-%d 2>/dev/null || date -d "last monday" +%Y-%m-%d)
 WEEK_END=$(date +%Y-%m-%d)
 ```
 
-Determine the current sprint via your tracker's API. Examples:
+Определи текущий спринт через API трекера. Примеры:
 
 <details>
 <summary>Jira</summary>
@@ -103,31 +104,31 @@ gh api graphql -f query='
 
 </details>
 
-### Phase 1: Parallel Data Collection
+### Фаза 1: Параллельный сбор данных
 
-Launch 3 parallel Task agents to collect data:
+Запусти 3 параллельных Task агента для сбора данных:
 
-#### Agent 1: Task Tracker (subagent_type: general-purpose)
+#### Агент 1: Трекер задач (subagent_type: general-purpose)
 
-Collect user's tasks from the current sprint and monthly epics/objectives:
+Собери задачи пользователя из текущего спринта и месячные цели:
 
-**What to collect:**
-1. **Sprint tasks** — all tasks assigned to the user in the current sprint (id, title, status, story points)
-2. **Monthly epics/objectives** — active epics or goals for the current month
-3. **Delegated tasks** — tasks created by the user and assigned to others (this is work too)
+**Что собирать:**
+1. **Задачи спринта** — все задачи пользователя в текущем спринте (id, название, статус, story points)
+2. **Месячные epics/цели** — активные epics или цели на текущий месяц
+3. **Делегированные задачи** — задачи, созданные пользователем и назначенные на других (делегирование — тоже работа)
 
-Adapt the API calls to your tracker. The key queries:
-- My sprint tasks: `project = PROJ AND sprint = currentSprint() AND assignee = currentUser()`
-- Active epics: `project = PROJ AND type = Epic AND updated >= startOfMonth()`
-- Created for others: `project = PROJ AND creator = currentUser() AND assignee != currentUser() AND created >= WEEK_START`
+Адаптируй API-вызовы под свой трекер. Ключевые запросы:
+- Мои задачи спринта: `project = PROJ AND sprint = currentSprint() AND assignee = currentUser()`
+- Активные epics: `project = PROJ AND type = Epic AND updated >= startOfMonth()`
+- Созданные для других: `project = PROJ AND creator = currentUser() AND assignee != currentUser() AND created >= WEEK_START`
 
-#### Agent 2: Git (subagent_type: general-purpose)
+#### Агент 2: Git (subagent_type: general-purpose)
 
-Collect commits from all repositories:
+Собери коммиты из всех репозиториев:
 
 ```bash
 USER=$(git config user.name)
-SINCE="$WEEK_START"  # From Phase 0
+SINCE="$WEEK_START"  # Из Фазы 0
 
 echo "=== Git Activity for $USER since $SINCE ==="
 
@@ -143,110 +144,110 @@ find $REPOS_ROOT -maxdepth $REPOS_SCAN_DEPTH -name '.git' 2>/dev/null | while re
 done
 ```
 
-#### Agent 3: Claude Sessions Analysis (subagent_type: general-purpose)
+#### Агент 3: Анализ Claude-сессий (subagent_type: general-purpose)
 
-Analyze AI sessions for the week using the learnings framework.
+Проанализируй AI-сессии за неделю по фреймворку learnings.
 
-Find session files:
+Найди файлы сессий:
 ```bash
 find ~/.claude/projects -name "*.jsonl" -mtime -7 2>/dev/null
 ```
 
-Read each jsonl file and categorize insights using this framework:
+Читай каждый jsonl файл и категоризируй инсайты по фреймворку:
 
-**Workflow Improvements** (what improved your work):
-- `plan_before_code` — planning before writing code
-- `requirements_first` — clarifying requirements before implementation
-- `parallel_exploration` — using parallel agents for research
-- `test_first` — writing tests before implementation
-- `incremental_approach` — incremental approach to tasks
-- `docs_first` — documentation before code
-- `dry_run_first` — checking commands before execution
-- `validation_before_commit` — validation before committing
+**Workflow Improvements** (что улучшило работу):
+- `plan_before_code` — планирование перед написанием кода
+- `requirements_first` — уточнение требований до реализации
+- `parallel_exploration` — использование параллельных агентов
+- `test_first` — написание тестов перед реализацией
+- `incremental_approach` — инкрементальный подход к задачам
+- `docs_first` — документация до кода
+- `dry_run_first` — проверка команд перед выполнением
+- `validation_before_commit` — валидация до коммита
 
-**Automation Opportunities** (what can be automated):
-- `skill` — repeating process → create a skill
-- `hook` — automatic check → create a hook
-- `subagent` — complex task → create a subagent
-- `mcp_integration` — service integration → MCP server
-- `alias` — frequent command → alias
+**Automation Opportunities** (что можно автоматизировать):
+- `skill` — повторяющийся процесс → создать skill
+- `hook` — автоматическая проверка → создать hook
+- `subagent` — сложная задача → создать subagent
+- `mcp_integration` — интеграция с сервисом → MCP-сервер
+- `alias` — частая команда → алиас
 
-**CLAUDE.md Additions** (what to add to project instructions):
-- `architecture_rule` — architectural rule for the project
-- `code_convention` — code convention
-- `gotcha` — non-obvious quirk or trap
-- `context_file` — file to load into context
-- `command_shortcut` — command shortcut
-- `tool_preference` — tool preference
+**CLAUDE.md Additions** (что добавить в инструкции проекта):
+- `architecture_rule` — архитектурное правило проекта
+- `code_convention` — соглашение о коде
+- `gotcha` — неочевидная особенность/ловушка
+- `context_file` — файл для загрузки в контекст
+- `command_shortcut` — команда-шорткат
+- `tool_preference` — предпочтение инструмента
 
-**Knowledge to Capture** (knowledge worth preserving):
-- `codebase_fact` — fact about the codebase
-- `solution_pattern` — problem-solving pattern
-- `external_resource` — useful external resource
-- `team_convention` — team convention
+**Knowledge to Capture** (знания для сохранения):
+- `codebase_fact` — факт о кодовой базе
+- `solution_pattern` — паттерн решения проблемы
+- `external_resource` — полезный внешний ресурс
+- `team_convention` — командное соглашение
 
-For each category, extract 2-3 concrete examples from the sessions.
+Для каждой категории выдели 2-3 конкретных примера из сессий.
 
-### Phase 2: Show Context
+### Фаза 2: Показ контекста
 
-After all agents complete, show the user the collected context:
+После завершения всех агентов покажи пользователю собранный контекст:
 
-**My sprint tasks:**
-| ID | Task | SP | Status |
-|----|------|:--:|--------|
+**Мои задачи спринта:**
+| ID | Задача | SP | Статус |
+|----|--------|:--:|--------|
 | PROJ-123 | ... | 5 | In Progress |
 
-**Tasks created for others:**
-| ID | Task | Assignee | SP | Status |
-|----|------|----------|:--:|--------|
+**Задачи, созданные для других:**
+| ID | Задача | Assignee | SP | Статус |
+|----|--------|----------|:--:|--------|
 | PROJ-456 | ... | @colleague | 3 | Open |
 
 **Git summary:**
-- repo-a: X commits
-- repo-b: Y commits
+- repo-a: X коммитов
+- repo-b: Y коммитов
 
 **AI Learnings:**
-- Workflow improvements: ...
-- Automation opportunities: ...
-- CLAUDE.md suggestions: ...
+- Лучшие практики: ...
+- Возможности автоматизации: ...
+- Предложения для CLAUDE.md: ...
 
-### Phase 3: Interview
+### Фаза 3: Интервью
 
-Conduct a structured interview, asking questions one at a time:
+Проведи структурированное интервью, задавая вопросы по одному:
 
-1. **Results** — What did you accomplish? Which tasks do you consider the main achievements?
+1. **Результаты недели** — Что удалось сделать? Какие задачи считаешь главными достижениями?
 
-2. **Problems** — What got in the way? What blockers or difficulties came up?
+2. **Проблемы** — Что мешало работе? Какие блокеры или трудности возникли?
 
-3. **Closing tasks** — Which tasks can be closed? (show the list of Open/In Progress tasks)
+3. **Закрытие задач** — Какие из задач можно закрыть? (покажи список Open/In Progress)
 
-4. **Connection to monthly goals** — How does this week's work relate to Epics? What's the contribution to monthly goals?
+4. **Связь с месячными целями** — Как работа недели связана с Epics? Какой вклад в месячные цели?
 
-5. **Improvement suggestions** — Any ideas for improving processes, tools, workflow?
+5. **Предложения по улучшению** — Есть ли идеи по улучшению процессов, инструментов, workflow?
 
-6. **What felt good** — What was the highlight of the week? (a moment, achievement, colleague, tool)
+6. **Что было приятно** — Что порадовало на этой неделе? (момент, достижение, коллега, инструмент)
 
-Use AskUserQuestion for each question.
+Используй AskUserQuestion для каждого вопроса.
 
-### Phase 4: Generate Report
+### Фаза 4: Генерация отчёта
 
-Create a report using the template from `templates/reflection.md`:
+Создай отчёт по шаблону из `templates/reflection.md`:
 
 ```
 {REFLECTIONS_PATH}/{user-slug}/{sprint}/reflection.md
 ```
 
-For example: `knowledge-base/team/john-doe/sprint-12/reflection.md`
+Например: `knowledge-base/team/john-doe/sprint-12/reflection.md`
 
-Create directories if they don't exist.
+Создай необходимые директории если их нет.
 
-### Phase 5: Update Tracker
+### Фаза 5: Актуализация трекера
 
-Based on the answer to question 3, generate commands to close tasks.
+На основе ответа на вопрос 3 сформируй команды для закрытия задач.
 
-**DO NOT execute automatically** — only show the commands for manual execution.
+**НЕ выполняй автоматически** — только покажи команды для ручного выполнения.
 
-Adapt to your tracker:
+Адаптируй под свой трекер:
 
 <details>
 <summary>Jira</summary>
@@ -284,14 +285,14 @@ curl -X POST -H "Authorization: Bearer $(cat $TRACKER_TOKEN_PATH)" \
 
 </details>
 
-## Output
+## Выходные данные
 
-- Reflection report: `{REFLECTIONS_PATH}/{user-slug}/{sprint}/reflection.md`
-- List of commands to close tasks in your tracker
-- AI Learnings categorized by the framework
+- Отчёт рефлексии: `{REFLECTIONS_PATH}/{user-slug}/{sprint}/reflection.md`
+- Список команд для закрытия задач в трекере
+- AI Learnings с категоризацией по фреймворку
 
-## Dependencies
+## Зависимости
 
-- Task tracker API token
-- Git access to repositories
-- Claude Code sessions: `~/.claude/projects/*/transcript.jsonl`
+- API-токен трекера задач
+- Git-доступ к репозиториям
+- Сессии Claude Code: `~/.claude/projects/*/transcript.jsonl`
