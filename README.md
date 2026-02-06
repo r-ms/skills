@@ -15,6 +15,7 @@ skills/
 
 | Skill | Платформа | Описание |
 |-------|-----------|----------|
+| [Weekly Reflection](claude/weekly-reflection/) | Claude Code | AI-assisted weekly self-reflection for teams |
 | [ATJBD](chatgpt/atjbd/) | ChatGPT | Product Strategy & JTBD Architect |
 | [UX Reviewer](chatgpt/ux-reviewer/) | ChatGPT | UI/UX анализ скриншотов |
 
