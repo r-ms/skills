@@ -1,10 +1,10 @@
 ---
 name: mcp-building-guide
-description: Knowledge base for building MCP servers. Best practices from 50 production servers.
-triggers:
-  - /mcp-guide
-  - /mcp-best-practices
-  - mcp building guide
+description: >
+  Руководство по разработке MCP-серверов на основе 50 production-серверов.
+  Используй при планировании, разработке или ревью MCP-серверов:
+  архитектура, выбор транспорта, дизайн tools, безопасность,
+  prompt injection защита, OAuth 2.1, deployment.
 ---
 
 # MCP Building Guide — Skill Instructions
