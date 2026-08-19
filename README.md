@@ -17,6 +17,7 @@ skills/
 |-------|-----------|----------|
 | [Weekly Reflection](claude/weekly-reflection/) | Claude Code | AI-assisted weekly self-reflection for teams |
 | [MCP Building Guide](claude/mcp-building-guide/) | Claude Code | Best practices для разработки MCP-серверов (50 production-серверов) |
+| [Prompt Construction](https://github.com/r-ms/prompt-construction) | Claude Code | Правила конструирования и отладки промптов к LLM API — каждое правило с замером |
 | [ATJBD](chatgpt/atjbd/) | ChatGPT | Product Strategy & JTBD Architect |
 | [UX Reviewer](chatgpt/ux-reviewer/) | ChatGPT | UI/UX анализ скриншотов |
 
