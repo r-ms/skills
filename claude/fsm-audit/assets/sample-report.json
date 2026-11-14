@@ -1,0 +1,480 @@
+{
+  "meta": {
+    "title": "FSM audit: toy job queue",
+    "repo": "evals/toy-repo",
+    "date": "2026-01-01",
+    "language": "en",
+    "mode": "scout",
+    "scope": "Entity: job (jobs.py). One Scout run, read-only, code was not executed.",
+    "agents": {
+      "scouts": 1,
+      "skeptics": 3
+    }
+  },
+  "summary": {
+    "headline": "3 bugs and 1 risk in the job lifecycle; the main cause is writes without a from-guard.",
+    "bullets": [
+      "A late failure can overwrite a finished job (no guard in fail).",
+      "The watchdog resets jobs by elapsed time only and acts as a second writer.",
+      "retry_failed resets any state, including done, with no attempts cap."
+    ],
+    "counts": [
+      {
+        "label": "Writers of jobs.status",
+        "value": "6",
+        "unit": "SQL statements writing the column (control: claim found)"
+      },
+      {
+        "label": "Declared states",
+        "value": "4",
+        "unit": "status domain only (projection: status)"
+      },
+      {
+        "label": "Findings after skeptic",
+        "value": "3 bugs confirmed, 1 risk, 0 rejected",
+        "unit": "findings"
+      }
+    ]
+  },
+  "entities": [
+    {
+      "id": "E1",
+      "name": "job",
+      "location": "jobs.py",
+      "projection": [
+        "status"
+      ],
+      "excluded": [
+        "result (payload)",
+        "attempts (counter, not a state axis)"
+      ],
+      "other_holders": [
+        "lease_until (lease, second holder of liveness)"
+      ],
+      "domains": {
+        "status": [
+          "pending",
+          "processing",
+          "done",
+          "dead"
+        ]
+      },
+      "declared": "4",
+      "reachable": "4 by conditions in code; dead has an exit only through retry_failed",
+      "writers": {
+        "unit": "SQL statements that write jobs.status",
+        "control": "claim (jobs.py:15) was found",
+        "methods": [
+          {
+            "name": "text search (find_writers.py)",
+            "hits": 6,
+            "independent": true
+          },
+          {
+            "name": "reading every function",
+            "hits": 6,
+            "independent": true
+          }
+        ],
+        "set_difference": "none",
+        "not_visible": [
+          "other services",
+          "manual edits"
+        ],
+        "rows": [
+          {
+            "where": "jobs.py:11",
+            "writes": "-> pending (insert)",
+            "guard": "n/a (insert)",
+            "guard_result_read": "n/a",
+            "provenance": "quoted",
+            "quote": "db.execute(\"insert into jobs (id, status, attempts) values (?, 'pending', 0)\", (job_id,))"
+          },
+          {
+            "where": "jobs.py:15",
+            "writes": "pending -> processing",
+            "guard": "status='pending'",
+            "guard_result_read": "yes (rowcount)",
+            "provenance": "quoted",
+            "quote": "cur = db.execute(\"update jobs set status='processing', attempts=attempts+1, lease_until=? \""
+          },
+          {
+            "where": "jobs.py:21",
+            "writes": "processing -> done",
+            "guard": "status='processing'",
+            "guard_result_read": "no",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='done', result=? where id=? and status='processing'\", (result, job_id))"
+          },
+          {
+            "where": "jobs.py:26",
+            "writes": "any -> dead",
+            "guard": "none",
+            "guard_result_read": "n/a",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='dead' where id=?\", (job_id,))"
+          },
+          {
+            "where": "jobs.py:31",
+            "writes": "processing -> pending",
+            "guard": "lease_until < now (time only)",
+            "guard_result_read": "no",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='pending' where status='processing' and lease_until < ?\", (time.time(),))"
+          },
+          {
+            "where": "jobs.py:36",
+            "writes": "any -> pending",
+            "guard": "none",
+            "guard_result_read": "n/a",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='pending' where id=?\", (job_id,))"
+          }
+        ]
+      },
+      "events": [
+        "complete(ok)",
+        "complete(error)",
+        "late failure",
+        "watchdog tick",
+        "retry"
+      ],
+      "table": {
+        "states": [
+          "pending",
+          "processing",
+          "done",
+          "dead"
+        ],
+        "events": [
+          "complete(ok)",
+          "late failure",
+          "watchdog tick",
+          "retry"
+        ],
+        "cells": [
+          {
+            "state": "processing",
+            "event": "complete(ok)",
+            "value": "ALLOWED",
+            "target": "done",
+            "evidence": "jobs.py:21",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='done', result=? where id=? and status='processing'\", (result, job_id))"
+          },
+          {
+            "state": "processing",
+            "event": "late failure",
+            "value": "ALLOWED",
+            "target": "dead",
+            "evidence": "jobs.py:26",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='dead' where id=?\", (job_id,))"
+          },
+          {
+            "state": "processing",
+            "event": "watchdog tick",
+            "value": "ALLOWED",
+            "target": "pending",
+            "evidence": "jobs.py:31",
+            "provenance": "quoted",
+            "note": "by time only",
+            "quote": "db.execute(\"update jobs set status='pending' where status='processing' and lease_until < ?\", (time.time(),))"
+          },
+          {
+            "state": "done",
+            "event": "late failure",
+            "value": "ALLOWED",
+            "target": "dead",
+            "evidence": "jobs.py:26",
+            "provenance": "quoted",
+            "note": "should be FORBIDDEN",
+            "quote": "db.execute(\"update jobs set status='dead' where id=?\", (job_id,))"
+          },
+          {
+            "state": "done",
+            "event": "retry",
+            "value": "ALLOWED",
+            "target": "pending",
+            "evidence": "jobs.py:36",
+            "provenance": "quoted",
+            "note": "resurrection of a terminal state",
+            "quote": "db.execute(\"update jobs set status='pending' where id=?\", (job_id,))"
+          },
+          {
+            "state": "dead",
+            "event": "retry",
+            "value": "ALLOWED",
+            "target": "pending",
+            "evidence": "jobs.py:36",
+            "provenance": "quoted",
+            "quote": "db.execute(\"update jobs set status='pending' where id=?\", (job_id,))"
+          },
+          {
+            "state": "pending",
+            "event": "complete(ok)",
+            "value": "EMPTY",
+            "evidence": "jobs.py:21",
+            "provenance": "derived",
+            "note": "guard refuses, result not read"
+          },
+          {
+            "state": "done",
+            "event": "complete(ok)",
+            "value": "NO-CHANGE",
+            "evidence": "jobs.py:21",
+            "provenance": "derived"
+          },
+          {
+            "state": "pending",
+            "event": "late failure",
+            "value": "N/A",
+            "evidence": "jobs.py:26",
+            "provenance": "derived",
+            "note": "a failure event cannot arrive for a job nobody claimed"
+          }
+        ],
+        "defaults": [
+          {
+            "event": "watchdog tick",
+            "value": "NO-CHANGE",
+            "evidence": "jobs.py:31",
+            "provenance": "derived",
+            "note": "reap_expired touches only rows in processing"
+          }
+        ]
+      },
+      "empty_cells": [
+        {
+          "state": "pending",
+          "event": "complete(ok)",
+          "class": "forgotten",
+          "note": "the guarded update returns zero rows and nobody reads it"
+        },
+        {
+          "state": "processing",
+          "event": "retry",
+          "class": "unclear",
+          "note": "retry on a leased job: intended?"
+        }
+      ],
+      "forbidden_combinations": [
+        "done with a later dead",
+        "processing with attempts at an unbounded value"
+      ],
+      "unreachable": [],
+      "state_space": {
+        "declared": "4",
+        "reachable": "4",
+        "regions": "projection: status only",
+        "note": "single axis; no explosion",
+        "behavioural": "4 behavioural states; stored combinations of status only (4)"
+      },
+      "treatment": {
+        "outcome": "guard",
+        "reason": "one axis with stable values; the defects are unconditioned writes, not a missing type",
+        "price": "3 statements get a from-guard and a rows-affected check",
+        "reversibility": "high (code-only change)"
+      },
+      "not_covered": [
+        "callers of the module",
+        "production configuration of the lease"
+      ],
+      "side_fields": [
+        "attempts (counter that changes whether claim succeeds: only in the fixed version)"
+      ],
+      "events_considered": [
+        {
+          "event": "restart between two writes",
+          "verdict": "n/a",
+          "why": "each statement is a single write; no multi-step handler in this module"
+        },
+        {
+          "event": "cold start with empty cache",
+          "verdict": "n/a",
+          "why": "no cache; state lives in the table"
+        },
+        {
+          "event": "timers (lease expiry)",
+          "verdict": "applies",
+          "why": "reap_expired uses lease_until; see F3"
+        },
+        {
+          "event": "poison message with no terminal exit",
+          "verdict": "applies",
+          "why": "no attempts cap; see F5"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "entity": "E1",
+      "class": "bug",
+      "severity": 2,
+      "title": "A late failure overwrites a finished job",
+      "claim": "fail() writes status='dead' with no from-guard, so a worker that fails after the job was completed by another worker turns done into dead.",
+      "path": [
+        "worker A claims the job",
+        "lease expires and the watchdog returns the job to pending",
+        "worker B claims and completes it (done)",
+        "worker A fails and calls fail(): status becomes dead"
+      ],
+      "evidence": [
+        {
+          "file": "jobs.py",
+          "line": 26,
+          "quote": "update jobs set status='dead' where id=?"
+        }
+      ],
+      "provenance": "quoted",
+      "impact": "A completed job is reported as dead; its result is hidden.",
+      "refuted_if": "a row lock, version column or status condition exists in the caller's transaction",
+      "test_idea": "A leases; expire lease; B completes; A fails; expect done.",
+      "skeptic": {
+        "verdict": "confirmed",
+        "lens": "mechanism",
+        "reason": "trace confirmed in jobs.py lines 15, 21, 26, 31"
+      },
+      "reach": "needs a slow worker and an expired lease; plausible under load."
+    },
+    {
+      "id": "F2",
+      "entity": "E1",
+      "class": "bug",
+      "severity": 3,
+      "title": "retry_failed resets any state and has no attempts cap",
+      "claim": "retry_failed sets pending for any job, including done, and nothing bounds the number of attempts.",
+      "path": [
+        "job finishes (done)",
+        "an operator or script calls retry_failed",
+        "job returns to pending and runs again"
+      ],
+      "evidence": [
+        {
+          "file": "jobs.py",
+          "line": 36,
+          "quote": "update jobs set status='pending' where id=?"
+        }
+      ],
+      "provenance": "quoted",
+      "impact": "Resurrection of terminal states; poison jobs can loop forever.",
+      "refuted_if": "callers only pass ids of dead jobs and a cap is enforced elsewhere",
+      "test_idea": "complete a job; call retry_failed; expect refusal.",
+      "skeptic": {
+        "verdict": "confirmed",
+        "lens": "mechanism",
+        "reason": "no guard and no cap in the module"
+      },
+      "known_to_owners": "A comment in the module says retries are manual and \"accepted for now\"."
+    },
+    {
+      "id": "F3",
+      "entity": "E1",
+      "class": "bug",
+      "severity": 3,
+      "title": "Watchdog acts on elapsed time only",
+      "claim": "reap_expired returns processing jobs to pending when the lease expired; a slow but alive worker still holds the job and will write a result.",
+      "path": [
+        "worker A is slow",
+        "lease expires",
+        "watchdog sets pending",
+        "worker B claims",
+        "both write"
+      ],
+      "evidence": [
+        {
+          "file": "jobs.py",
+          "line": 31,
+          "quote": "where status='processing' and lease_until < ?"
+        }
+      ],
+      "provenance": "derived",
+      "impact": "Duplicate execution and overwritten results.",
+      "refuted_if": "workers fence writes by an epoch or the lease is renewed by heartbeat",
+      "test_idea": "A holds, watchdog resets, B claims, A completes: expect a refusal for A.",
+      "skeptic": {
+        "verdict": "confirmed",
+        "lens": "reach",
+        "reason": "no heartbeat or epoch in the module"
+      }
+    },
+    {
+      "id": "F4",
+      "entity": "E1",
+      "class": "risk",
+      "severity": null,
+      "title": "complete() ignores the rows-affected result",
+      "claim": "complete() uses a guarded update but never reads the result, so a refused completion is silent.",
+      "path": [
+        "job is not in processing",
+        "complete() runs",
+        "zero rows change, caller sees success"
+      ],
+      "evidence": [
+        {
+          "file": "jobs.py",
+          "line": 21,
+          "quote": "where id=? and status='processing'"
+        }
+      ],
+      "provenance": "quoted",
+      "impact": "A result can be lost without a trace.",
+      "refuted_if": "a caller checks job status after complete()",
+      "test_idea": "complete() on a pending job: expect an error or a logged refusal.",
+      "skeptic": {
+        "verdict": "not sure",
+        "lens": "reach",
+        "reason": "callers are outside the module"
+      },
+      "absence": {
+        "search": "find_writers.py --names attempts",
+        "scope": "all .py files under evals/toy-repo",
+        "control": "attempts written at jobs.py:15 was found",
+        "result": "attempts is written at 2 lines and read at 0: nothing compares it with a cap"
+      }
+    },
+    {
+      "id": "F5",
+      "entity": "E1",
+      "class": "bug",
+      "severity": 3,
+      "title": "A job with attempts above the cap is still claimable",
+      "claim": "claim() does not compare attempts with any limit.",
+      "path": [
+        "job fails repeatedly",
+        "reap_expired returns it to pending",
+        "claim succeeds again, forever"
+      ],
+      "evidence": [
+        {
+          "file": "jobs.py",
+          "line": 15,
+          "quote": "update jobs set status='processing', attempts=attempts+1"
+        }
+      ],
+      "provenance": "quoted",
+      "impact": "A poison job loops forever.",
+      "refuted_if": "a cap exists in the caller",
+      "test_idea": "fail a job 10 times; expect dead.",
+      "skeptic": {
+        "verdict": "not checked",
+        "reason": "verification: self-check (weak); the independent skeptic did not run"
+      }
+    }
+  ],
+  "rejected": [],
+  "not_covered": [
+    "callers of jobs.py",
+    "production lease configuration",
+    "other services reading the status"
+  ],
+  "method_notes": [
+    "Quotes were verified mechanically with check_quotes.py.",
+    "Reading is not running: nothing was executed."
+  ],
+  "questions": [
+    "Is retry_failed meant to be called for done jobs, or only for dead ones? (needed to classify F2 as bug or by-design)"
+  ]
+}

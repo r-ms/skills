@@ -1,0 +1,60 @@
+{
+  "description": "Quality evals. Run each case twice in a clean context: with the skill and without it, then compare. Assertions must be checkable; remove assertions that pass in both configurations. Record time and tokens. Have a human review the outputs.",
+  "cases": [
+    {
+      "id": "toy-1",
+      "prompt": "Audit the job lifecycle in evals/toy-repo/jobs.py. Use the fsm-audit skill, Scout mode.",
+      "repo": "evals/toy-repo",
+      "assertions": [
+        "The report lists the status domain: pending, processing, done, dead.",
+        "The writers inventory names the unit and finds all 6 statements that write jobs.status (a control site is named).",
+        "A finding says fail() has no from-guard and a late failure can overwrite done (jobs.py:26).",
+        "A finding says retry_failed resurrects done and has no attempts cap (jobs.py:36).",
+        "A finding says reap_expired acts on elapsed time only and is a second writer (jobs.py:31).",
+        "The ignored rows-affected result of complete() (jobs.py:21) is noted as a silent empty cell or risk.",
+        "Every finding has file:line and a verbatim quote that check_quotes.py accepts.",
+        "No finding is reported as a bug without a skeptic verdict or an explicit self-check (weak) label.",
+        "The not-covered list is present."
+      ]
+    },
+    {
+      "id": "fixed-toy-1",
+      "prompt": "Audit evals/toy-repo-fixed/jobs.py with the skill, Scout mode.",
+      "repo": "evals/toy-repo-fixed (create it by adding from-guards, a rows-affected check and an attempts cap to the toy repo)",
+      "assertions": [
+        "The earlier defects are NOT reported as open (false-alarm control).",
+        "The report still contains the table and the not-covered list."
+      ]
+    },
+    {
+      "id": "target-orm-status",
+      "prompt": "Audit the lifecycle of <entity> in <repo>.",
+      "repo": "choose: an application with an ORM status column (orders, tickets, subscriptions) in any language",
+      "assertions": [
+        "Fill in before running: one known real implicit automaton, one known false alarm (independent flags), one known unreachable state."
+      ]
+    },
+    {
+      "id": "target-ui-flags",
+      "prompt": "Audit the loading and error state handling of <screen> in <repo>.",
+      "repo": "choose: a frontend with isLoading / isError / hasData flags",
+      "assertions": [
+        "Fill in before running: impossible flag combination that the code can reach; the report proposes a discriminated union or regions, not one enum for independent flags."
+      ]
+    },
+    {
+      "id": "target-cache-files",
+      "prompt": "Audit the state kept in cache keys and marker files of <service>.",
+      "repo": "choose: a service with cache keys, lock or marker files and a reconciler",
+      "assertions": [
+        "Fill in before running: a copy-as-second-state bug; the report names the cold-start event."
+      ]
+    }
+  ],
+  "notes": [
+    "Use at least three real repositories of different stacks before claiming the skill generalizes.",
+    "Add injected defects on a throwaway copy and a fixed-version control; defects injected by a model are found more easily than real ones.",
+    "Check on a small, a medium and a large model: a skill that works on the largest model can lose steps on a small one.",
+    "Add every method error found in a run to the Gotchas section of SKILL.md."
+  ]
+}

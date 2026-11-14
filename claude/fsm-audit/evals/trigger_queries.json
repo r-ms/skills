@@ -1,0 +1,135 @@
+{
+  "description": "20 queries for tuning the skill description: 10 should trigger, 10 near-misses that share vocabulary but should not. Run each at least 3 times and count the trigger rate (threshold 0.5). Fixed split: train 60 percent, validation 40 percent. Choose the best description by validation, not by the last iteration, and do not add words from failed queries to the description.",
+  "queries": [
+    {
+      "id": "P01",
+      "query": "Why can an order in our shop be both paid and cancelled at the same time? Look at the code and tell me how that is possible.",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P02",
+      "query": "audit the job queue under src/worker for jobs that get stuck or run twice",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P03",
+      "query": "User has is_active, is_verified and is_blocked flags and some combinations feel impossible. Map which combinations the code really allows.",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P04",
+      "query": "find hidden state machines in this repo",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "id": "P05",
+      "query": "review how subscription status changes across the webhook handlers; I suspect a late event overwrites a newer state",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "id": "P06",
+      "query": "something sits in 'processing' forever. check every place that writes the status column",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P07",
+      "query": "list every place that updates tickets.status and tell me which ones do not check the previous status",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P08",
+      "query": "can you build a state by event table for the checkout flow from the code?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "id": "P09",
+      "query": "our payment retries sometimes double charge. check the lifecycle of a payment in this service for ordering and idempotency holes",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "id": "P10",
+      "query": "проведи аудит статусов заказа: какие переходы возможны и какие из них ничем не защищены?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "id": "N01",
+      "query": "add an enum for order statuses in models.py and replace the string constants",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N02",
+      "query": "draw a state diagram of the login flow",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N03",
+      "query": "write unit tests for the OrderStatus enum",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N04",
+      "query": "implement a vending machine as a finite state machine for this kata",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "validation"
+    },
+    {
+      "id": "N05",
+      "query": "formally verify this consensus protocol in TLA+",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "validation"
+    },
+    {
+      "id": "N06",
+      "query": "fix the bug in checkout.py where total is computed twice",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N07",
+      "query": "explain what a finite state machine is",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N08",
+      "query": "review this PR for naming and style problems",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "train"
+    },
+    {
+      "id": "N09",
+      "query": "migrate the status column from varchar to a Postgres enum type",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "validation"
+    },
+    {
+      "id": "N10",
+      "query": "find the race condition in the cache refresh function in utils/cache.go",
+      "should_trigger": false,
+      "near_miss": true,
+      "split": "validation"
+    }
+  ]
+}
