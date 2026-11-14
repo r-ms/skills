@@ -4,7 +4,7 @@ description: Finds implicit state machines in any codebase (state spread across 
 license: MIT
 compatibility: Works with plain grep and file reading. Optional ripgrep and Python 3.9+ for helper scripts. No network access needed.
 metadata:
-  author: fsm-audit contributors
+  author: Michael Rakutko
   version: "0.2.0"
 ---
 
